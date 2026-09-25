@@ -54,11 +54,22 @@ function apiResponse(res, statusCode, payload) {
   return res.status(statusCode).json(payload);
 }
 
-function ensureAuthenticated(req, res, next) {
-  if (req.session && req.session.user) {
-    return next();
+function isAuthenticatedSession(req) {
+  return !!(req.session && (req.session.user || req.session.authenticated));
+}
+
+function requirePageAuth(req, res, next) {
+  if (!isAuthenticatedSession(req)) {
+    return res.redirect("/login");
   }
-  return apiResponse(res, 401, { success: false, error: "Authentication required" });
+  return next();
+}
+
+function requireApiAuth(req, res, next) {
+  if (!isAuthenticatedSession(req)) {
+    return apiResponse(res, 401, { success: false, error: "Authentication required" });
+  }
+  return next();
 }
 
 const publicDir = path.join(__dirname, "public");
@@ -79,11 +90,11 @@ app.get("/login", (req, res) => {
   return res.sendFile(path.join(publicDir, "login.html"));
 });
 
-app.get("/dashboard", ensureAuthenticated, (req, res) => res.sendFile(path.join(publicDir, "dashboard.html")));
-app.get("/contacts", ensureAuthenticated, (req, res) => res.sendFile(path.join(publicDir, "contacts.html")));
-app.get("/campaigns", ensureAuthenticated, (req, res) => res.sendFile(path.join(publicDir, "campaigns.html")));
-app.get("/messages", ensureAuthenticated, (req, res) => res.sendFile(path.join(publicDir, "messages.html")));
-app.get("/templates", ensureAuthenticated, (req, res) => res.sendFile(path.join(publicDir, "templates.html")));
+app.get("/dashboard", requirePageAuth, (req, res) => res.sendFile(path.join(publicDir, "dashboard.html")));
+app.get("/contacts", requirePageAuth, (req, res) => res.sendFile(path.join(publicDir, "contacts.html")));
+app.get("/campaigns", requirePageAuth, (req, res) => res.sendFile(path.join(publicDir, "campaigns.html")));
+app.get("/messages", requirePageAuth, (req, res) => res.sendFile(path.join(publicDir, "messages.html")));
+app.get("/templates", requirePageAuth, (req, res) => res.sendFile(path.join(publicDir, "templates.html")));
 
 app.get("/webhook", (req, res) => {
   if (req.query["hub.mode"] !== "subscribe" || req.query["hub.verify_token"] !== config.verifyToken) {
@@ -119,6 +130,7 @@ app.post("/api/login", loginLimiter, async (req, res) => {
     return apiResponse(res, 401, { success: false, error: "Invalid username or password" });
   }
 
+  req.session.authenticated = true;
   req.session.user = { username };
   const payload = { success: true, user: { username }, data: { user: { username } } };
   return apiResponse(res, 200, payload);
@@ -138,14 +150,11 @@ app.post("/api/logout", (req, res) => {
   return apiResponse(res, 200, { success: true, data: {} });
 });
 
-app.get("/api/me", (req, res) => {
-  if (!req.session || !req.session.user) {
-    return apiResponse(res, 401, { success: false, error: "Authentication required" });
-  }
+app.get("/api/me", requireApiAuth, (req, res) => {
   return apiResponse(res, 200, { success: true, user: req.session.user, data: { user: req.session.user } });
 });
 
-app.get("/api/dashboard", ensureAuthenticated, async (req, res) => {
+app.get("/api/dashboard", requireApiAuth, async (req, res) => {
   const stats = database.getDashboardStats();
   return apiResponse(res, 200, {
     success: true,
@@ -157,7 +166,7 @@ app.get("/api/dashboard", ensureAuthenticated, async (req, res) => {
   });
 });
 
-app.get("/api/contacts", ensureAuthenticated, (req, res) => {
+app.get("/api/contacts", requireApiAuth, (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
   const q = String(req.query.q || "").trim();
@@ -166,12 +175,12 @@ app.get("/api/contacts", ensureAuthenticated, (req, res) => {
   return apiResponse(res, 200, { success: true, data: result });
 });
 
-app.post("/api/contacts", ensureAuthenticated, (req, res) => {
+app.post("/api/contacts", requireApiAuth, (req, res) => {
   const result = database.createContact(req.body || {});
   return apiResponse(res, 201, { success: true, data: { contact: result } });
 });
 
-app.put("/api/contacts/:id", ensureAuthenticated, (req, res) => {
+app.put("/api/contacts/:id", requireApiAuth, (req, res) => {
   const result = database.updateContact(req.params.id, req.body || {});
   if (!result) {
     return apiResponse(res, 404, { success: false, error: "Contact not found" });
@@ -179,7 +188,7 @@ app.put("/api/contacts/:id", ensureAuthenticated, (req, res) => {
   return apiResponse(res, 200, { success: true, data: { contact: result } });
 });
 
-app.delete("/api/contacts/:id", ensureAuthenticated, (req, res) => {
+app.delete("/api/contacts/:id", requireApiAuth, (req, res) => {
   const removed = database.deleteContact(req.params.id);
   if (!removed) {
     return apiResponse(res, 404, { success: false, error: "Contact not found" });
@@ -187,16 +196,16 @@ app.delete("/api/contacts/:id", ensureAuthenticated, (req, res) => {
   return apiResponse(res, 200, { success: true, data: { deleted: true } });
 });
 
-app.get("/api/campaigns", ensureAuthenticated, (req, res) => {
+app.get("/api/campaigns", requireApiAuth, (req, res) => {
   return apiResponse(res, 200, { success: true, data: database.listCampaigns() });
 });
 
-app.post("/api/campaigns", ensureAuthenticated, (req, res) => {
+app.post("/api/campaigns", requireApiAuth, (req, res) => {
   const campaign = database.createCampaign(req.body || {});
   return apiResponse(res, 201, { success: true, data: { campaign } });
 });
 
-app.post("/api/campaigns/:id/send", ensureAuthenticated, async (req, res) => {
+app.post("/api/campaigns/:id/send", requireApiAuth, async (req, res) => {
   const campaign = database.getCampaignById(req.params.id);
   if (!campaign) {
     return apiResponse(res, 404, { success: false, error: "Campaign not found" });
@@ -240,7 +249,7 @@ app.post("/api/campaigns/:id/send", ensureAuthenticated, async (req, res) => {
   return apiResponse(res, 200, { success: true, data: { campaignId: campaign.id, sentTo: recipients.length } });
 });
 
-app.get("/api/messages", ensureAuthenticated, (req, res) => {
+app.get("/api/messages", requireApiAuth, (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
   const q = String(req.query.q || "").trim();
@@ -258,11 +267,11 @@ app.get("/api/messages", ensureAuthenticated, (req, res) => {
   return apiResponse(res, 200, { success: true, data: { ...result, messages } });
 });
 
-app.get("/api/templates", ensureAuthenticated, (req, res) => {
+app.get("/api/templates", requireApiAuth, (req, res) => {
   return apiResponse(res, 200, { success: true, data: database.listTemplates() });
 });
 
-app.post("/api/test-whatsapp", ensureAuthenticated, async (req, res) => {
+app.post("/api/test-whatsapp", requireApiAuth, async (req, res) => {
   const phone = String(req.body?.to || "").trim();
   if (!phone) {
     return apiResponse(res, 400, { success: false, error: "A non-empty \"to\" field is required" });

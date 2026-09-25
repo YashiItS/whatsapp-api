@@ -105,6 +105,31 @@ test('login fails for invalid credentials without exposing user existence', asyn
   assert.match(data.error, /invalid username or password/i);
 });
 
+test('GET /dashboard without authentication redirects to /login', async () => {
+  const response = await fetch(`${baseUrl}/dashboard`, { redirect: 'manual' });
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get('location'), '/login');
+  assert.doesNotMatch(response.headers.get('location') || '', /username|password/i);
+});
+
+test('GET /dashboard with authentication returns dashboard HTML', async () => {
+  const loginResponse = await request('/api/login', {
+    method: 'POST',
+    body: JSON.stringify({ username: 'admin', password: 'secret' }),
+  });
+
+  const cookies = loginResponse.headers.get('set-cookie');
+  const dashboardPage = await fetch(`${baseUrl}/dashboard`, {
+    method: 'GET',
+    headers: { Cookie: cookies },
+  });
+
+  assert.equal(dashboardPage.status, 200);
+  assert.match(dashboardPage.headers.get('content-type') || '', /text\/html/i);
+  const html = await dashboardPage.text();
+  assert.match(html, /WhatsApp Admin|Dashboard/i);
+});
+
 test('unauthenticated request is rejected', async () => {
   const response = await request('/api/dashboard');
   assert.equal(response.status, 401);

@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const campaigns = document.getElementById('recentCampaigns');
   const messages = document.getElementById('recentMessages');
 
-  const response = await fetch('/api/dashboard', { credentials: 'same-origin' });
+  const response = await fetch('/api/dashboard', { credentials: 'include' });
   const payload = await response.json();
   if (!response.ok || !payload.success) {
     window.location.href = '/login';
