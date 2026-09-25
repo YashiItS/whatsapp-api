@@ -1,8 +1,19 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { app, startServer } = require('../app.js');
 
 const originalEnv = { ...process.env };
+process.env.ADMIN_USER = 'admin';
+process.env.ADMIN_PASS = 'secret';
+process.env.SESSION_SECRET = 'test-session-secret';
+process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
+process.env.PHONE_NUMBER_ID = 'test-phone-number-id';
+process.env.ACCESS_TOKEN = 'test-access-token';
+process.env.APP_SECRET = 'test-app-secret';
+process.env.VERIFY_TOKEN = 'test-verify-token';
+process.env.GRAPH_API_VERSION = 'v26.0';
+
+const { app, startServer } = require('../app.js');
+
 let server;
 let baseUrl;
 
@@ -25,16 +36,6 @@ async function request(path, options = {}) {
 }
 
 test.before(async () => {
-  process.env.ADMIN_USER = 'admin';
-  process.env.ADMIN_PASS = 'secret';
-  process.env.SESSION_SECRET = 'test-session-secret';
-  process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
-  process.env.PHONE_NUMBER_ID = 'test-phone-number-id';
-  process.env.ACCESS_TOKEN = 'test-access-token';
-  process.env.APP_SECRET = 'test-app-secret';
-  process.env.VERIFY_TOKEN = 'test-verify-token';
-  process.env.GRAPH_API_VERSION = 'v26.0';
-
   server = await startServer(0);
   const address = server.address();
   baseUrl = `http://127.0.0.1:${address.port}`;

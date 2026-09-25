@@ -9,18 +9,18 @@
 
 require("dotenv").config();
 
-const ENV_VARS = [
+const REQUIRED_ENV_VARS = [
   "ACCESS_TOKEN",
   "APP_SECRET",
   "VERIFY_TOKEN",
   "PHONE_NUMBER_ID",
-  "WABA_ID",
   "GRAPH_API_VERSION",
   "ADMIN_USER",
   "ADMIN_PASS",
   "SESSION_SECRET",
-  "DATABASE_URL"
 ];
+
+const ENV_VARS = [...REQUIRED_ENV_VARS, "WABA_ID", "DATABASE_URL"];
 
 function getMediaId(key) {
   const value = process.env[key];
@@ -36,9 +36,9 @@ Object.defineProperties(config, {
   graphApiVersion: { enumerable: true, get: () => process.env.GRAPH_API_VERSION || "v26.0" },
   phoneNumberId: { enumerable: true, get: () => process.env.PHONE_NUMBER_ID },
   wabaId: { enumerable: true, get: () => process.env.WABA_ID },
-  adminUser: { enumerable: true, get: () => process.env.ADMIN_USER || "admin" },
-  adminPass: { enumerable: true, get: () => process.env.ADMIN_PASS || "change-this-password" },
-  sessionSecret: { enumerable: true, get: () => process.env.SESSION_SECRET || "change-this-to-a-long-random-secret" },
+  adminUser: { enumerable: true, get: () => process.env.ADMIN_USER },
+  adminPass: { enumerable: true, get: () => process.env.ADMIN_PASS },
+  sessionSecret: { enumerable: true, get: () => process.env.SESSION_SECRET },
   databaseUrl: { enumerable: true, get: () => process.env.DATABASE_URL || null },
 
   groceriesMediaId: { enumerable: true, get: () => getMediaId("GROCERIES_MEDIA_ID") },
@@ -52,12 +52,14 @@ Object.defineProperties(config, {
 
   checkEnvVariables: {
     value: function () {
+      const missingRequired = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+      if (missingRequired.length > 0) {
+        throw new Error("Missing required environment variables: " + missingRequired.join(", "));
+      }
+
       ENV_VARS.forEach(function (key) {
-        if (!process.env[key]) {
-          const isOptional = key === "DATABASE_URL" || key === "WABA_ID";
-          if (!isOptional) {
-            console.warn("WARNING: Missing the environment variable " + key);
-          }
+        if (!process.env[key] && key !== "DATABASE_URL" && key !== "WABA_ID") {
+          console.warn("WARNING: Missing the environment variable " + key);
         }
       });
 

@@ -16,8 +16,6 @@ const { handleWebhookPayload, verifyWebhookSignature } = require("./services/web
 const app = express();
 const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
 
-config.checkEnvVariables();
-
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({
@@ -298,6 +296,7 @@ app.use((error, req, res, next) => {
 });
 
 async function startServer(port = config.port) {
+  config.checkEnvVariables();
   await database.initializeDatabase();
   return new Promise((resolve) => {
     const server = app.listen(port, "0.0.0.0", () => {
