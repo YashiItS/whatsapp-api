@@ -1,0 +1,106 @@
+:root {
+  --bg: #f4f7fb;
+  --panel: #ffffff;
+  --primary: #0d6efd;
+  --primary-dark: #0b5ed7;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --success: #198754;
+  --danger: #dc3545;
+  --warning: #f59e0b;
+  --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+body { min-height: 100vh; }
+a { color: inherit; text-decoration: none; }
+button, input, select { font: inherit; }
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #eaf2ff, #f7f9fc);
+}
+
+.auth-shell { width: min(100%, 420px); padding: 24px; }
+.auth-card {
+  background: var(--panel);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 32px 28px;
+}
+.auth-card h1 { margin: 0 0 8px; text-align: center; }
+.muted { color: var(--muted); text-align: center; margin-bottom: 22px; }
+#loginForm { display: flex; flex-direction: column; gap: 18px; }
+#loginForm label { display: flex; flex-direction: column; gap: 8px; font-weight: 600; }
+#loginForm input, #loginForm button, .toolbar input, .toolbar select, .form-grid input, .form-grid select, .toolbar button, .form-grid button {
+  width: 100%; min-height: 44px; border-radius: 10px; border: 1px solid var(--border); padding: 10px 12px; }
+#loginForm button, .toolbar button, .form-grid button, .logout-btn {
+  border: none; background: var(--primary); color: white; cursor: pointer; font-weight: 700; }
+#loginForm button:hover, .toolbar button:hover, .form-grid button:hover, .logout-btn:hover { background: var(--primary-dark); }
+.error { color: var(--danger); margin: 0; }
+.hidden { display: none !important; }
+
+.app-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  background: #111827;
+  color: white;
+  padding: 24px 18px;
+}
+.brand { font-size: 1.6rem; font-weight: 700; margin-bottom: 26px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 10px; }
+.nav-link {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: #d9e5ff;
+  font-weight: 600;
+}
+.nav-link.active, .nav-link:hover { background: rgba(255,255,255,0.08); }
+.logout-btn { margin-top: 18px; padding: 12px 14px; border-radius: 10px; }
+.content { padding: 24px; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 22px;
+}
+.user-badge { background: white; padding: 8px 12px; border-radius: 999px; box-shadow: var(--shadow); }
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.stat-card, .panel {
+  background: var(--panel); border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border);
+}
+.stat-card { padding: 20px; }
+.stat-card .label { color: var(--muted); font-size: 0.9rem; }
+.stat-card .value { font-size: 2rem; font-weight: 700; margin-top: 10px; }
+.panel { padding: 20px; margin-bottom: 20px; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; }
+.toolbar, .form-grid { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.form-grid input, .form-grid select { min-width: 180px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border-bottom: 1px solid var(--border); padding: 12px 10px; text-align: left; }
+button.secondary { background: #e5e7eb; color: var(--text); }
+.badge { display: inline-block; border-radius: 999px; padding: 6px 10px; font-size: 0.75rem; font-weight: 700; background: #ecfeff; color: #0f766e; }
+.badge.failed { background: #fef2f2; color: #b91c1c; }
+.badge.sent { background: #eff6ff; color: #1d4ed8; }
+.badge.delivered { background: #ecfdf5; color: #166534; }
+.badge.read { background: #f5f3ff; color: #6d28d9; }
+.preview-box, .template-card { border: 1px solid var(--border); border-radius: 12px; background: #f8fafc; padding: 16px; }
+.template-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.pager { display: flex; gap: 10px; margin-top: 18px; }
+.pager button { padding: 8px 12px; border: 1px solid var(--border); background: white; border-radius: 8px; cursor: pointer; }
+@media (max-width: 860px) {
+  .app-layout { grid-template-columns: 1fr; }
+  .sidebar { padding-bottom: 14px; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+}

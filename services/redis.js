@@ -10,53 +10,69 @@
 const redis = require('redis');
 const config = require('./config');
 
-const client = redis.createClient({
-  socket: {
-    host: config.redisHost,
-    port: config.redisPort
+let client = null;
+let connectionPromise = null;
+
+function createClient() {
+  if (client) {
+    return client;
   }
-});
 
-client.on('error', (err) => {
-  console.error('Redis Client Error', err);
-});
+  try {
+    client = redis.createClient({
+      socket: {
+        host: config.redisHost,
+        port: config.redisPort
+      }
+    });
 
-let connectionPromise;
+    client.on('error', (err) => {
+      console.warn('Redis unavailable; continuing without it:', err.message || err);
+    });
 
-function connect() {
-    if (!connectionPromise) {
-        connectionPromise = client.connect();
-    }
+    return client;
+  } catch (error) {
+    console.warn('Redis initialization failed; continuing without Redis:', error.message || error);
+    return null;
+  }
+}
 
-    return connectionPromise;
+async function connect() {
+  const activeClient = createClient();
+  if (!activeClient) {
+    return null;
+  }
+
+  if (!connectionPromise) {
+    connectionPromise = activeClient.connect().catch((error) => {
+      console.warn('Redis connection failed; continuing without Redis:', error.message || error);
+      connectionPromise = null;
+      return null;
+    });
+  }
+
+  return connectionPromise;
 }
 
 module.exports = class Cache {
-    static async insert(key) {
-        /**
-         * As of when this was written, the redis client doesn't support
-         * setting a TTL on members of the set dataytype. Instead, we'll
-         * use the standard hash map with a dummy value to mimic one.
-        */
-        await connect();
-        await client.set(key, "");
-
-        // Assume that most "delivered / read" webhooks will happen within
-        // 15 seconds.
-        await client.expire(key, 15);
+  static async insert(key) {
+    const activeClient = await connect();
+    if (!activeClient) {
+      return false;
     }
 
-    static async remove(key) {
-      await connect();
-        let resp = await client.del(key);
+    await activeClient.set(key, "");
+    await activeClient.expire(key, 15);
+    return true;
+  }
 
-        /**
-         * Optionally, your application can measure / report the ingress latency
-         * from Cloud API webhooks via Redis's TTL.
-         * Ex.
-         *      someLoggingFunc(client.ttl(key));
-        */
-
-        return resp > 0;
+  static async remove(key) {
+    const activeClient = await connect();
+    if (!activeClient) {
+      return false;
     }
-}
+
+    const resp = await activeClient.del(key);
+    return resp > 0;
+  }
+};

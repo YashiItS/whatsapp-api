@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Templates</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="brand">WhatsApp Admin</div>
+        <nav>
+          <a class="nav-link" href="/dashboard">Dashboard</a>
+          <a class="nav-link" href="/contacts">Contacts</a>
+          <a class="nav-link" href="/campaigns">Campaigns</a>
+          <a class="nav-link" href="/messages">Messages</a>
+          <a class="nav-link active" href="/templates">Templates</a>
+          <button id="logoutButton" class="logout-btn" type="button">Logout</button>
+        </nav>
+      </aside>
+      <main class="content">
+        <header class="topbar">
+          <h2>WhatsApp Templates</h2>
+          <div id="userBadge" class="user-badge">Loading...</div>
+        </header>
+        <section class="panel">
+          <div id="templatesList" class="template-grid"></div>
+        </section>
+      </main>
+    </div>
+    <script src="/js/auth.js"></script>
+    <script src="/js/templates.js"></script>
+  </body>
+</html>

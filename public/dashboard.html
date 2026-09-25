@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="brand">WhatsApp Admin</div>
+        <nav>
+          <a class="nav-link active" href="/dashboard">Dashboard</a>
+          <a class="nav-link" href="/contacts">Contacts</a>
+          <a class="nav-link" href="/campaigns">Campaigns</a>
+          <a class="nav-link" href="/messages">Messages</a>
+          <a class="nav-link" href="/templates">Templates</a>
+          <a class="nav-link" href="/login">Test WhatsApp</a>
+          <button id="logoutButton" class="logout-btn" type="button">Logout</button>
+        </nav>
+      </aside>
+      <main class="content">
+        <header class="topbar">
+          <h2>WhatsApp Admin</h2>
+          <div id="userBadge" class="user-badge">Loading...</div>
+        </header>
+        <section class="stats-grid" id="statsGrid"></section>
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Recent campaigns</h3>
+          </div>
+          <div id="recentCampaigns" class="list-table"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Recent messages</h3>
+          </div>
+          <div id="recentMessages" class="list-table"></div>
+        </section>
+      </main>
+    </div>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+  </body>
+</html>
