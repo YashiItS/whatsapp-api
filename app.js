@@ -102,6 +102,10 @@ app.post("/webhook", (req, res) => {
   }
 });
 
+app.get("/api/login", (req, res) => {
+  return apiResponse(res, 405, { success: false, error: "GET /api/login is not supported. Use POST with JSON credentials." });
+});
+
 app.post("/api/login", loginLimiter, async (req, res) => {
   const username = String(req.body?.username || "").trim();
   const password = String(req.body?.password || "");

@@ -50,7 +50,7 @@ test.after(async () => {
   Object.assign(process.env, originalEnv);
 });
 
-test('login succeeds with valid credentials', async () => {
+test('POST /api/login succeeds with valid credentials', async () => {
   const response = await request('/api/login', {
     method: 'POST',
     body: JSON.stringify({ username: 'admin', password: 'secret' }),
@@ -61,6 +61,36 @@ test('login succeeds with valid credentials', async () => {
   const data = JSON.parse(response.body);
   assert.equal(data.success, true);
   assert.equal(data.user.username, 'admin');
+});
+
+test('GET /api/login is not used for authentication', async () => {
+  const response = await request('/api/login', { method: 'GET' });
+  assert.equal(response.status, 405);
+  const data = JSON.parse(response.body);
+  assert.equal(data.success, false);
+  assert.match(data.error, /POST.*JSON/i);
+});
+
+test('invalid credentials return 401', async () => {
+  const response = await request('/api/login', {
+    method: 'POST',
+    body: JSON.stringify({ username: 'admin', password: 'wrong' }),
+  });
+
+  assert.equal(response.status, 401);
+  const data = JSON.parse(response.body);
+  assert.equal(data.success, false);
+  assert.match(data.error, /invalid username or password/i);
+});
+
+test('password does not appear in Location headers', async () => {
+  const response = await request('/api/login', {
+    method: 'POST',
+    body: JSON.stringify({ username: 'admin', password: 'secret' }),
+  });
+
+  const location = response.headers.get('location') || '';
+  assert.doesNotMatch(location, /secret|password/i);
 });
 
 test('login fails for invalid credentials without exposing user existence', async () => {
@@ -75,11 +105,31 @@ test('login fails for invalid credentials without exposing user existence', asyn
   assert.match(data.error, /invalid username or password/i);
 });
 
-test('protected dashboard endpoint rejects unauthenticated requests', async () => {
+test('unauthenticated request is rejected', async () => {
   const response = await request('/api/dashboard');
   assert.equal(response.status, 401);
   const data = JSON.parse(response.body);
   assert.equal(data.success, false);
+});
+
+test('authenticated session can access protected endpoint', async () => {
+  const loginResponse = await request('/api/login', {
+    method: 'POST',
+    body: JSON.stringify({ username: 'admin', password: 'secret' }),
+  });
+
+  const cookies = loginResponse.headers.get('set-cookie');
+  const dashboardResponse = await request('/api/dashboard', {
+    method: 'GET',
+    headers: {
+      Cookie: cookies,
+    },
+  });
+
+  assert.equal(dashboardResponse.status, 200);
+  const dashboard = JSON.parse(dashboardResponse.body);
+  assert.equal(dashboard.success, true);
+  assert.ok(typeof dashboard.data.contacts === 'number');
 });
 
 test('dashboard API returns stats when authenticated', async () => {
